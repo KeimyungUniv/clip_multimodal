@@ -13,6 +13,7 @@ import torch
 import clip
 from PIL import Image
 from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
 import torch.nn as nn
 import torch.optim as optim 
 
@@ -29,7 +30,7 @@ import torch.optim as optim
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu" # If using GPU then use mixed precision training.
 model, preprocess = clip.load("ViT-B/32",device=device,jit=False) #Must set jit=False for training
-BATCH_SIZE = 3
+BATCH_SIZE = 1
 EPOCH = 20
 
 class image_title_dataset(Dataset):
@@ -47,8 +48,8 @@ class image_title_dataset(Dataset):
         return image,title
 
 # use your own data
-list_image_path = ['image1.jpg','image2.jpg'] 
-list_txt = ['description for image1.jpg' , 'description for image2.jpg']
+list_image_path = ['acat.png','adog.png'] 
+list_txt = ['description for acat.png' , 'description for adog.png']
 dataset = image_title_dataset(list_image_path,list_txt)
 train_dataloader = DataLoader(dataset,batch_size = BATCH_SIZE) #Define your own dataloader
 
