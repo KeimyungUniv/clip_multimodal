@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 import torch.nn as nn
 import torch.optim as optim 
+import os
 
 # Latest Update : 18 July 2022, 09:55 GMT+7
 
@@ -31,7 +32,7 @@ import torch.optim as optim
 device = "cuda:0" if torch.cuda.is_available() else "cpu" # If using GPU then use mixed precision training.
 model, preprocess = clip.load("ViT-B/32",device=device,jit=False) #Must set jit=False for training
 BATCH_SIZE = 1
-EPOCH = 20
+EPOCH = 10
 
 class image_title_dataset(Dataset):
     def __init__(self, list_image_path,list_txt):
@@ -69,8 +70,14 @@ loss_img = nn.CrossEntropyLoss()
 loss_txt = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=5e-5,betas=(0.9,0.98),eps=1e-6,weight_decay=0.2) #Params used from paper, the lr is smaller, more safe for fine tuning to new dataset
 
+# Directory to save the model
+save_dir = "./saved_models"
+if not os.path.exists(save_dir):
+    os.makedirs(save_dir)
+
 # add your own code to track the training progress.
 for epoch in range(EPOCH):
+  print(f"epoch : {epoch}")
   for batch in train_dataloader :
       optimizer.zero_grad()
 
@@ -85,9 +92,15 @@ for epoch in range(EPOCH):
 
       total_loss = (loss_img(logits_per_image,ground_truth) + loss_txt(logits_per_text,ground_truth))/2
       total_loss.backward()
+      print(f"total_loss = {total_loss}")
       if device == "cpu":
          optimizer.step()
       else : 
         convert_models_to_fp32(model)
         optimizer.step()
         clip.model.convert_weights(model)
+        
+  # Save model after each epoch
+  model_save_path = os.path.join(save_dir, f"clip_model_epoch_{epoch + 1}.pt")
+  torch.save(model.state_dict(), model_save_path)
+  print(f"Model saved at {model_save_path}")
